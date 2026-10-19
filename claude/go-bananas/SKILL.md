@@ -3,9 +3,9 @@ name: go-bananas
 description: >
   End-of-session closer and next-session starter. Use when the user says "go bananas", "wrap up", "finish what's owed", asks for a handover, or wants to resume from a handover. With room left in the
   session it finishes every outstanding task it can, writes exact prompts for anything a browser agent should do, and walks the user through anything only they can do. When the session is running low
-  it updates the docs, pushes what is safe, saves a complete handover to HANDOVER.md, and gives a one-line command that opens a fresh session already picking up where this one left off. Accepts
-  "finish", "handover" or "resume".
-allowed-tools: git:*
+  it updates the docs, pushes what is safe, saves a complete handover to HANDOVER.md, and gives a one-line command that opens a fresh session already picking up where this one left off, plus one-click
+  handoff buttons for the Claude Code and Codex apps. Accepts "finish", "handover" or "resume".
+allowed-tools: Bash(git:*)
 disable-model-invocation: true
 ---
 
@@ -64,20 +64,22 @@ Finish with the checklist again, each item marked ✅ done, 🤖 handed to a bro
 
 1. **Update the docs.** Bring README, CHANGELOG, setup notes or other project docs in line with what changed this session. Only edit docs that are actually stale.
 2. **Write `HANDOVER.md`** in the project root (format below). If the project has no clear root, use the current working directory.
-3. **Push what is safe.** Commit and push work that is complete and passes its checks, plus `HANDOVER.md`, so the next session finds it on any machine. Never push secrets, broken builds, or half-finished changes to a shared or default branch: describe those in the handover instead, or push them to a work-in-progress branch and name that branch in the handover. Say what you pushed and what you held back. If this isn't a git repository, just save the file.
-4. **Give the user the handoff "button":** the one-liner that opens a fresh session already resuming. Show all three, each in its own copy box:
+3. **Push what is safe.** Commit and push work that is complete and passes its checks, plus `HANDOVER.md`, so the next session finds it on any machine. Never push secrets or broken builds to a shared or default branch. Say what you pushed and what you held back. If this isn't a git repository, just save the file.
 
-   Claude Code:
+   **Uncommitted work doesn't travel.** A new session on another machine or in the cloud only sees what was pushed. If there are half-finished changes, create a branch named `wip/handover-<YYYYMMDD>`, commit them there with `HANDOVER.md`, push it, and stay on it, so the handoff buttons open that branch. If the user told you not to commit something, leave it, and warn them plainly that it exists only on this computer and a cloud session won't see it.
+4. **Give the user the handoff buttons.** Run the script that ships with this skill, from the project root:
+
    ```bash
-   claude "/go-bananas resume"
+   bash <this skill's folder>/scripts/handoff-links.sh --for claude   # in Claude Code
+   bash <this skill's folder>/scripts/handoff-links.sh --for codex    # in Codex
    ```
 
-   OpenAI Codex:
-   ```bash
-   codex '$go-bananas resume'
-   ```
+   It prints Markdown links that open a new session with the resume prompt already filled in: a claude.ai link (web, desktop and phone apps, with the repo and branch pre-selected), a Claude desktop link, a Claude Code terminal link and a Codex app link, depending on where you are running. **Paste its output into your reply exactly as printed**, so the apps render the links as buttons. Don't build these links by hand.
 
-   In a desktop, web or mobile app: open a new session on the same project and send `/go-bananas resume` (Claude) or `$go-bananas resume` (Codex).
+   If the script can't run, give the user these instead:
+   - Claude Code terminal: `claude "/go-bananas resume"`
+   - Codex terminal: `codex '$go-bananas resume'`
+   - Any app: open a new session in this project and send "Resume from HANDOVER.md in this project: read all of it and follow its resume rules."
 
 5. **Also show the full handover** in one copy box, for pasting anywhere the skill isn't installed. Use a **four-backtick fence** (` ```` `) or a tilde fence (`~~~`) for the outer block so any code inside, fenced with normal three backticks, can't break it. The outer fence must open once at the top and close once at the bottom.
 
@@ -88,8 +90,14 @@ The file must stand on its own: a fresh session with no memory of this one, and 
 ```markdown
 # Handover: <project or task name>
 
-> Written <date> by a previous session. To resume, read this whole file,
-> check it against the repo, then start with "First move".
+> Written <date> by a previous session.
+>
+> **Resume rules for the next session:** read this whole file. Run
+> `git status --short --branch` and `git log --oneline -5` and say if anything
+> differs from "Where things stand". Ask the user every question under
+> "Decisions for the user" at once, with the options and recommendation as
+> written. Then start "First move" and work down "Outstanding tasks", verifying
+> each one. When every task is done, delete this file and commit the deletion.
 
 ## Goal
 What we are building and why, in two or three sentences.
@@ -130,4 +138,5 @@ Leave out sections that would be empty, except **Outstanding tasks** and **First
 
 - Never claim something is done that you didn't verify. "Pushed" means the push succeeded.
 - Never put secrets, tokens or passwords in `HANDOVER.md`. Name where they live instead ("the API key is in `.env`").
+- Don't put the handoff links or any local file paths in `HANDOVER.md`; they belong in your reply only.
 - When everything is wrapped up, end with: "Bob's your uncle. 🍌"
