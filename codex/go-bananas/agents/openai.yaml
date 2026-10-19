@@ -1,0 +1,5 @@
+interface:
+  short_description: Finish what's owed, or hand over in one command
+  default_prompt: Use $go-bananas to ...
+policy:
+  allow_implicit_invocation: false
