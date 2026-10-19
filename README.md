@@ -51,7 +51,7 @@ bash <installed-skill>/scripts/handoff-links.sh --for claude --handover handover
 
 Local links and terminal commands include the intended project location; cloud links identify the GitHub repository and branch. You still need destination access and any local services or ignored files. App links are conveniences: generated URL tests do not prove that an app opened or successfully resumed. The full copyable handover remains the fallback.
 
-The skill cannot infer an exact context budget from chat length or compaction. For longer work, use `checkpoint` at useful milestones instead of relying only on a final wrap-up.
+While loaded, the skill aims to hand over by **50% context use**. It checks real usage when available, prepares early and stops starting substantial work at the target, allowing safe closeout. This applies to finish, checkpoint and resume unless the user explicitly asks to continue. When usage is unavailable, it discloses that limit and uses bounded units with early handoffs; it never invents a percentage or treats compaction as a fresh session. This is guidance for the agent, not an automatic monitor of sessions where the skill is not loaded.
 
 ## Install
 

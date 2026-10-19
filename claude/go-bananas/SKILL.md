@@ -30,7 +30,13 @@ List unfinished requests and promises by name. Reconcile them with files and, fo
 
 Plain `GB` or `go bananas` relies on skill discovery. Explicit invocation is `/go-bananas` or `/gb` in Claude Code, `$go-bananas` or `$gb` in Codex.
 
-Use a real context-budget signal if available; do not infer an exact budget from chat length or compaction. Otherwise admit uncertainty and choose a small unit or checkpoint. If this session has done no work and an active handover exists, offer to resume it rather than overwrite it.
+### Context handoff target
+
+Aim to hand over by **50% of the available context window used** (equivalently, 50% remaining). While this skill is active, check a real context-budget signal before substantial work and after meaningful milestones. Prepare the handover early enough to leave room for verification and closeout. At or above 50%, avoid starting another substantial unit: bring any in-flight action to a safe stopping point, save verified state and hand over the remaining work. Treat this as the default for finish, checkpoint and resume too, unless the user explicitly asks to continue in this session. If the scoped work is already complete, close it out without inventing a transfer.
+
+If usage is unavailable, say so; do not infer an exact percentage from chat length or compaction or claim the target was met. Use bounded work units, keep the handover current at milestones and hand over before another substantial unit rather than continuing indefinitely. Compaction is not a fresh-session handoff. This is model-followed guidance while the skill is loaded, not an automatic context monitor; do not install hooks or change global rules to enforce it.
+
+If this session has done no work and an active handover exists, offer to resume it rather than overwrite it.
 
 ## Finish
 
@@ -41,7 +47,7 @@ For each item:
 
 Use evidence-based states: prepared, implemented, verified (name the check), pushed, deployed, accepted, blocked, or waiting on the user. These are distinct. A prepared instruction or unobserved external action is not completed work.
 
-Checkpoint before starting another large unit. A skill invoked near session end cannot recover information already lost; for ongoing longer work, offer this same lightweight checkpoint after meaningful milestones without installing hooks or changing global rules.
+Checkpoint before starting another large unit, subject to the context handoff target above. A checkpoint preserves progress but does not replace transferring remaining work when the target is reached. A skill invoked near session end cannot recover information already lost.
 
 ## Checkpoint or hand over
 
