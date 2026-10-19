@@ -28,7 +28,7 @@ constraints:
 
 # gb
 
-Shortcut for **go-bananas**. Run the go-bananas skill now, exactly as if the user had typed it, and pass along anything they typed after `gb` (`finish`, `handover` or `resume`).
+Shortcut for **go-bananas**. Run the go-bananas skill now, exactly as if the user had typed it, and pass along anything they typed after `gb` (`finish`, `handover`, `checkpoint` or `resume`).
 
 - Claude Code: invoke the `go-bananas` skill.
 - Codex: use `$go-bananas`.
