@@ -2,6 +2,7 @@
 # Recoverable installer for the Polyskill-built Claude Code and Codex variants.
 # Usage: bash install.sh [--dry-run] [--replace] [--target claude|codex|all] [--ref COMMIT_OR_TAG]
 set -euo pipefail
+umask 077
 REPO=https://github.com/Holodeck23/go-bananas
 TARGET=auto
 REF=""

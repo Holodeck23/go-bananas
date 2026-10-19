@@ -14,6 +14,8 @@ Close out the work the user actually requested, preserving verified state for ei
 
 Read applicable project instructions. Carry forward the user's goal, permissions, exclusions and acceptance criteria. Review-only stays read-only; prepare-only does not become publish, deploy, merge or send. Preserve unrelated edits and other sessions' work. A read-only session returns a handover in chat without writing files or committing.
 
+Before committing, pushing or sharing in any mode, apply the pre-share check below.
+
 List unfinished requests and promises by name. Reconcile them with files and, for Git work, `git status --short --branch`, `git log --oneline -5`, and relevant diffs. Separate your changes from pre-existing changes. Show a short checklist. If nothing remains, report the verified outcome and stop; do not invent backlog work.
 
 ## Choose a mode
@@ -46,9 +48,10 @@ Checkpoint before starting another large unit. A skill invoked near session end 
 1. Update only documentation made stale by this work, when edits are authorized.
 2. Save one active `HANDOVER.md`, using the project's prescribed artifact location before defaulting to the project root. Private/client evidence stays in its approved private location. If writing is prohibited, return the full handover in chat.
 3. Re-read an existing handover before updating it. Keep its ID, writer/runtime, task scope and earlier useful evidence. Update only your own scope; do not overwrite another active session's work. For independent concurrent tasks, use a task-specific filename and identify it in every resume prompt.
-4. Commit/push only when existing authorization and project policy permit. Inspect the exact staged diff and stage only intended paths. Check for sensitive content even on WIP branches. Never sweep up unrelated changes, switch branches or publish unfinished work just to make a cloud link work. Where a WIP branch is authorized, use the project's branch convention and a unique name. With no remote, use the project's own backup path if defined; do not add a remote.
-5. Record what was saved, committed, pushed or held locally, and why. Verify pushes against the intended remote branch. A cloud session needs the actual handover and required files there; ignored files, local services, credentials and uncommitted edits do not travel. Describe prerequisites by name, never secret value.
-6. Run the small closeout check below. After a **handover**, stop executing transferred tasks here. A **checkpoint** retains ownership here.
+4. **Before any commit/push or sharing the handover**, review its full contents and the exact staged diff for chat excerpts, personal/client context, names, contact details, private paths and credentials. Run `python3 <skill-folder>/scripts/preshare-scan.py` from the repository root after staging only intended files, before committing. It scans full staged blobs and reports file/line/category without echoing matches. Optionally pass `--deny-file <private-local-file>` containing known private names/identifiers; never commit that list. A finding, unavailable scanner, binary or linked content needs resolution or explicit user review before sharing. Re-scan after edits or restaging. A clean pattern scan is not proof of privacy: semantic content review is still required. For chat-only/non-Git handovers, do that content review directly; do not create a repository or stage files just to run the scanner.
+5. Commit/push only when existing authorization and project policy permit. Inspect the exact staged diff and stage only intended paths. Check for sensitive content even on WIP branches. Never sweep up unrelated changes, switch branches or publish unfinished work just to make a cloud link work. Where a WIP branch is authorized, use the project's branch convention and a unique name. With no remote, use the project's own backup path if defined; do not add a remote.
+6. Record what was saved, committed, pushed or held locally, and why. Verify pushes against the intended remote branch. A cloud session needs the actual handover and required files there; ignored files, local services, credentials and uncommitted edits do not travel. Describe prerequisites by name, never secret value.
+7. Run the small closeout check below. After a **handover**, stop executing transferred tasks here. A **checkpoint** retains ownership here.
 
 ### Small closeout check (adapted from Vulcan's Mirror)
 

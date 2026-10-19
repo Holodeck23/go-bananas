@@ -4,7 +4,7 @@ identity:
   description:
     full: >
       Use when the user types /gb or $gb. Two-letter shortcut for the
-      go-bananas skill: finish what's owed, or hand over with one click.
+      go-bananas skill: finish authorized work, checkpoint or hand over verified progress.
     short: Shortcut for go-bananas
 activation:
   triggers:

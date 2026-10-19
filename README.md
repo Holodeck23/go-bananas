@@ -1,135 +1,97 @@
 # 🍌 Go Bananas
 
-> The laziest way to end an AI coding session. Type one command, and Bob's your uncle.
+Finish what's owed. Preserve what isn't. Resume in Claude Code or Codex.
 
-You know that long "finish everything, and if you're running out of room write me a handover" prompt you paste at the end of every session? This is that, as a skill, plus a **handoff button** that opens the next session already picking up where this one stopped.
+Inspired by the “go bananas” end-of-session voice-snippet workflow shared in Early AI-dopters. This packages that habit as a [Polyskill](https://github.com/earlyaidopters/polyskill) skill: one portable source, generated variants for both runtimes.
 
-Just type:
+## Use it
 
+| Action | Claude Code | Codex |
+|---|---|---|
+| Choose finish or handover | `/gb` | `$gb` |
+| Finish authorized work | `/gb finish` | `$gb finish` |
+| Save progress, keep working here | `/gb checkpoint` | `$gb checkpoint` |
+| Transfer remaining work | `/gb handover` | `$gb handover` |
+| Continue from a handover | `/gb resume` | `$gb resume` |
+
+The full name `go-bananas` also works. Plain `GB`, `gb` or `go bananas` is a convenience trigger that depends on the model selecting the skill; explicit invocation is more reliable. A voice snippet can insert either form.
+
+## What happens
+
+The skill inventories unfinished requests and promises, checks them against actual artifacts and Git state, and works within the user's existing authorization. Review-only remains read-only; prepared instructions, verified work, successful pushes, deployment and human acceptance remain separate states.
+
+If tools can finish an authorized task, it uses them. Otherwise it prepares a browser-agent prompt or gives the user practical steps. A prepared prompt stays marked **prepared** until execution is confirmed.
+
+For continuation, it saves one active `HANDOVER.md` (or the project's preferred artifact path), including boundaries, evidence, unresolved tasks and the first move. It preserves concurrent writers' work and archives completed handovers instead of erasing history. Read-only sessions return the handover in chat.
+
+The small closeout check adapts the useful part of Vulcan's Mirror: reconcile requests against observed results, identify unresolved owners, and retain only lessons that affect the next action. No Vulcan installation, ritual logs or hooks are required.
+
+### Before sharing
+
+The skill reviews the exact staged diff and runs the packaged scanner before committing or pushing:
+
+```bash
+python3 <installed-skill>/scripts/preshare-scan.py
+# Optional private names/identifiers, one literal per line; keep this file private:
+python3 <installed-skill>/scripts/preshare-scan.py --deny-file <private-local-file>
 ```
-GB
+
+It scans full staged blobs for common credential patterns, personal paths, emails, contact fields, pasted chat/export markers and sensitive filenames. Findings show file, line and category, without echoing matched contents. Binary, linked or unreadable content requires review. Re-scan after changing the staged content.
+
+**A clean scan is not proof of privacy.** Personal names, client details and private narrative context still require a content review. This is a model-followed workflow with a deterministic helper, not an enforced Git hook. Python 3 is required for the scanner; a missing scanner does not clear anything for sharing.
+
+### Opening the next session
+
+The link helper verifies that the handover is committed and unchanged, the working tree is clean, and the **live origin branch** matches the local commit. It uses a read-only remote query, not a stale or unrelated tracking branch. Only then does it offer a cloud link. Offline/access failures, symlinks, missing files and local changes produce a warning and local/copyable alternatives. It never commits or pushes to make a link work.
+
+```bash
+bash <installed-skill>/scripts/handoff-links.sh --for codex
+bash <installed-skill>/scripts/handoff-links.sh --for claude --handover handovers/task.md
 ```
 
-That's it. `GB`, `gb` or `go bananas` as the whole message works in both Claude Code and Codex. So does `/gb` (or `$gb` in Codex), and the full `/go-bananas`.
+Local links and terminal commands include the intended project location; cloud links identify the GitHub repository and branch. You still need destination access and any local services or ignored files. App links are conveniences: generated URL tests do not prove that an app opened or successfully resumed. The full copyable handover remains the fallback.
+
+The skill cannot infer an exact context budget from chat length or compaction. For longer work, use `checkpoint` at useful milestones instead of relying only on a final wrap-up.
 
 ## Install
 
-```bash
-curl -fsSL https://raw.githubusercontent.com/Holodeck23/go-bananas/main/install.sh | bash
-```
-
-It finds Claude Code and/or Codex on your machine and installs the skill for each one. Prefer to do it by hand? See [Manual install](#manual-install).
-
-## What it does
-
-It lists everything still owed (unfinished asks, things it promised, failing tests, unpushed commits), checks git so the list matches reality, then picks a mode and tells you why.
-
-### 🏁 Finish (room left in the session)
-
-Every open item goes into exactly one bucket:
-
-| Who can do it | What you get |
-|---|---|
-| The agent itself | It just does it, and verifies it. |
-| A browser agent, inside an app | A detailed, exact prompt in a copy box. |
-| Only you | A step-by-step walkthrough, one action per step. |
-
-### 🤝 Hand over (running low, or unsure)
-
-1. Updates any docs that went stale this session.
-2. Saves a full handover to `HANDOVER.md`: goal, where things stand, outstanding tasks, known issues, and the first move. Every open decision gets plain-language options with examples, pros and cons, and a recommendation.
-3. Pushes what's safe, including the handover, so the next session finds it on any machine. Half-finished work goes to its own `wip/handover-<date>` branch instead of being left behind on your computer. It never pushes secrets or broken builds to your main branch.
-4. Gives you the **handoff buttons**:
-
-> ### ▶️ Start the next session
-> - **▶ Open in Claude Code** (web, desktop or phone): opens a new session on the same repo and branch, with the resume prompt filled in
-> - **Open in the Claude desktop app** or **a Claude Code terminal** on your own computer
-> - **▶ Open in the Codex app** when you're in Codex
-> - Terminal: `claude "/go-bananas resume"` or `codex '$go-bananas resume'`
-
-Click one, check the prompt, press Enter. The apps never send a link's prompt for you, so you stay in control.
-
-| Where you are | Button it gives you |
-|---|---|
-| Claude Code on the web, phone or desktop | `https://claude.ai/code/new?…` with the repo and branch pre-selected |
-| Claude desktop app, local folder | `claude://code/new?…` (you pick the folder) |
-| Claude Code in a terminal | `claude-cli://open?…` in the same folder, plus the `claude` command |
-| Codex app | `codex://threads/new?…` in the same folder, plus the `codex` command |
-
-It also warns you if anything hasn't been pushed or committed, because a new session somewhere else can't see it.
-
-### ▶️ Resume (the new session)
-
-Reads `HANDOVER.md`, checks it against the repo and flags anything that changed, asks you the open decisions all at once, then starts on the first move. When everything's done it deletes the handover so it can't confuse a later session.
-
-## Commands
-
-| Type | What happens |
-|---|---|
-| `GB` | It decides: finish or hand over. |
-| `GB finish` | Finish what's owed now. |
-| `GB handover` | Hand over now, even with room left. |
-| `GB resume` | Pick up from `HANDOVER.md` in a new session. |
-
-`/gb`, `/go-bananas`, `$gb` and `$go-bananas` take the same words after them.
-
-## Why not just paste a prompt?
-
-A saved prompt or voice snippet is great, and it works in any AI tool with nothing to install. Here's what the skill adds on top:
-
-| | Pasted prompt | Go Bananas |
-|---|---|---|
-| Works in any AI tool | ✅ | Claude Code and Codex only |
-| Nothing to install | ✅ | One-line install |
-| How to trigger | Paste or dictate a long paragraph | Type `GB` |
-| Where the handover lives | A copy box in the chat | `HANDOVER.md`, pushed with your code |
-| Half-finished work | Easy to leave behind on one computer | Pushed to a `wip/` branch |
-| Starting the next session | Copy, open a session, paste | Click a button |
-| Picking up | Hope the new session reads it carefully | Resume rules: checks git, asks decisions first, cleans up after |
-| Context cost | Small | A bit more while it runs |
-
-Best of both: point your snippet at `GB`.
-
-## Good to know
-
-- **It only runs when you ask.** It's told to fire on `GB`, `go bananas`, or a clear request to wrap up the session, not on everyday wording like "wrap up this function".
-- **It can't see a fuel gauge.** Agents can't measure exactly how much room is left in a session, so it judges from signs like a very long chat or earlier messages already being summarized. When in doubt it hands over: a clean handover is cheap, a session that dies mid-task isn't. Force it either way with `finish` or `handover`.
-- **No skill on the other end? No problem.** `HANDOVER.md` carries its own resume rules, so the buttons work even where the skill isn't installed. The full handover is also shown in one copy box you can paste anywhere.
-- **Extra lazy:** it's already two letters. Map a voice snippet to `GB` if typing is too much.
-
-## Manual install
+Review a checkout first, then preview and install its built variants:
 
 ```bash
 git clone https://github.com/Holodeck23/go-bananas
-cp -r go-bananas/claude/* ~/.claude/skills/    # Claude Code
-cp -r go-bananas/codex/* ~/.agents/skills/     # Codex
+cd go-bananas
+bash install.sh --dry-run --target all
+bash install.sh --target all
 ```
 
-Claude Code picks it up right away. In Codex, refresh skills.
+`--target claude` or `--target codex` installs only that runtime. With no target, the installer detects existing runtimes. Destinations are `~/.claude/skills/{go-bananas,gb}` and `~/.agents/skills/{go-bananas,gb}`. Refresh skill discovery if the new skill does not appear; you can also explicitly ask the agent to read the installed `SKILL.md` by path.
 
-## How it's built
+Existing destinations are refused by default. After reviewing the preview, `--replace` stages all new files before replacing anything, retains previous copies outside the skill catalog, and prints a receipt plus an undo command. A normal failure or handled interruption rolls the transaction back. A hard interruption may require the recorded recovery script; inspect the retained files first. No unrelated runtime configuration or hooks are modified.
 
-Go Bananas is a [polyskill](https://github.com/earlyaidopters/polyskill) workspace: one portable source, compiled into a version tuned for each runtime.
-
-```
-src/                      ← the source (edit here)
-  definition.md           ← the skill, written once
-  polyskill.yaml          ← build targets
-  scripts/handoff-links.sh
-src-gb/                   ← the /gb shortcut, same setup
-claude/go-bananas/        ← built for Claude Code
-codex/go-bananas/         ← built for Codex (+ agents/openai.yaml)
-tests/                    ← checks for the button script
-```
-
-To change it, edit `src/`, then rebuild and test:
+Remote installation requires an explicit reviewed commit or tag:
 
 ```bash
-(cd src && polyskill build --force && polyskill validate)
-(cd src-gb && polyskill build --force && polyskill validate)
-bash tests/handoff-links.test.sh
+# Download install.sh from the same reviewed revision, then:
+bash install.sh --ref <reviewed-commit-or-tag> --dry-run --target all
+bash install.sh --ref <reviewed-commit-or-tag> --target all
 ```
+
+There is no unpinned remote-install fallback. The installer needs Bash and Git; using the scanner also needs Python 3.
+
+## Build and test
+
+Edit `src/definition.md` and `src/scripts/`, or `src-gb/definition.md` for the shortcut. Runtime directories are generated artifacts, not separate sources.
+
+```bash
+(cd src && polyskill build && polyskill validate)
+(cd src-gb && polyskill build && polyskill validate)
+python3 -m unittest discover -s tests -p '*_test.py' -v
+```
+
+The regression suites use throwaway Git repositories and isolated home directories. They cover cloud-readiness failures, encoding/quoting, custom handovers, staged privacy checks and installer recovery. The helper's remote transport is redirected to a real local bare repository for repeatable tests. These tests do not establish model behavior or app-link compatibility.
+
+For a live trial, start with a harmless task and ask for a checkpoint. Inspect its goal, boundaries, evidence and remaining work. Resume it in a fresh session, then try the other runtime with the same handover. Also try a read-only request: it should produce a chat handover without changing files.
 
 ## License
 
-[MIT](LICENSE). Share it, fork it, go bananas.
+[MIT](LICENSE).
