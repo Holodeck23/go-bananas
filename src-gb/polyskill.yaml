@@ -1,0 +1,6 @@
+version: 1
+targets:
+  - adapter: claude
+    path: ../claude
+  - adapter: codex
+    path: ../codex

@@ -1,8 +1,10 @@
 ---
 name: go-bananas
-description: Use when the user says "go bananas", "wrap up", "finish what's owed", asks for a handover, or wants to resume from a handover. End-of-session closer and next-session starter.
+description: >-
+  Use when the user's whole message is "GB", "gb" or "go bananas" (optionally followed by finish, handover or resume), when they explicitly ask to wrap up the session or write a handover, or when
+  they…
 metadata:
-  short-description: Finish what's owed, or hand over with one click
+  short-description: Type GB. Finish what's owed, or hand over with one click
 ---
 
 # go-bananas
@@ -11,14 +13,14 @@ Excellent work so far. This skill closes out a session properly: finish what's o
 
 ## Step 0. Read the mode
 
-Look at what the user typed after the skill name.
+Look at what the user typed after the skill name, or after "GB" / "go bananas" if they typed it as a plain message (`GB handover` = handover mode).
 
 | They typed | Do this |
 |---|---|
 | nothing | Steps 1 and 2 below; you choose the mode. |
 | `finish` | Step 1, then Mode A. |
 | `handover` | Step 1, then Mode B. |
-| `resume` | Skip everything else and go straight to **Mode C**. |
+| `resume`, or "resume from HANDOVER.md" | Skip everything else and go straight to **Mode C**. |
 
 If there is no argument but a `HANDOVER.md` exists in the project root and this session has done no work yet, ask one question: "There's a handover from a previous session. Resume it?" If yes, Mode C.
 

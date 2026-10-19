@@ -1,0 +1,5 @@
+interface:
+  short_description: Shortcut for go-bananas
+  default_prompt: Use $gb to ...
+policy:
+  allow_implicit_invocation: false

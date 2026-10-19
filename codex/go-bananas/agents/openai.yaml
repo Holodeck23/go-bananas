@@ -1,5 +1,3 @@
 interface:
-  short_description: Finish what's owed, or hand over with one click
+  short_description: Type GB. Finish what's owed, or hand over with one click
   default_prompt: Use $go-bananas to ...
-policy:
-  allow_implicit_invocation: false

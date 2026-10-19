@@ -3,25 +3,26 @@ identity:
   name: go-bananas
   description:
     full: >
-      End-of-session closer and next-session starter. Use when the user says
-      "go bananas", "wrap up", "finish what's owed", asks for a handover, or
-      wants to resume from a handover. With room left in the session it
-      finishes every outstanding task it can, writes exact prompts for
-      anything a browser agent should do, and walks the user through anything
-      only they can do. When the session is running low it updates the docs,
-      pushes what is safe, saves a complete handover to HANDOVER.md, and gives
-      a one-line command that opens a fresh session already picking up where
-      this one left off, plus one-click handoff buttons for the Claude Code
-      and Codex apps. Accepts "finish", "handover" or "resume".
-    short: Finish what's owed, or hand over with one click
+      Use when the user's whole message is "GB", "gb" or "go bananas" (optionally
+      followed by finish, handover or resume), when they explicitly ask to wrap
+      up the session or write a handover, or when they ask to resume from
+      HANDOVER.md. Not for ordinary tasks that merely mention wrapping
+      something up. End-of-session closer and next-session starter: with room
+      left it finishes every outstanding task it can, writes exact prompts for
+      browser-agent work, and walks the user through anything only they can
+      do; when the session is running low it updates docs, pushes what is
+      safe, saves HANDOVER.md, and gives one-click handoff buttons that open a
+      fresh Claude Code or Codex session already resuming.
+    short: Type GB. Finish what's owed, or hand over with one click
 activation:
   triggers:
+    - GB
+    - gb
     - go bananas
-    - wrap up
-    - handover
-    - resume from handover
-    - finish outstanding tasks
-  auto_invoke: false
+    - wrap up the session
+    - write a handover
+    - resume from HANDOVER.md
+  auto_invoke: true
   user_invoke: true
 dependencies:
   mcp: []
@@ -47,14 +48,14 @@ Excellent work so far. This skill closes out a session properly: finish what's o
 
 ## Step 0. Read the mode
 
-Look at what the user typed after the skill name.
+Look at what the user typed after the skill name, or after "GB" / "go bananas" if they typed it as a plain message (`GB handover` = handover mode).
 
 | They typed | Do this |
 |---|---|
 | nothing | Steps 1 and 2 below; you choose the mode. |
 | `finish` | Step 1, then Mode A. |
 | `handover` | Step 1, then Mode B. |
-| `resume` | Skip everything else and go straight to **Mode C**. |
+| `resume`, or "resume from HANDOVER.md" | Skip everything else and go straight to **Mode C**. |
 
 If there is no argument but a `HANDOVER.md` exists in the project root and this session has done no work yet, ask one question: "There's a handover from a previous session. Resume it?" If yes, Mode C.
 

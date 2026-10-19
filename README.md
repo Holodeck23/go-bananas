@@ -4,10 +4,13 @@
 
 You know that long "finish everything, and if you're running out of room write me a handover" prompt you paste at the end of every session? This is that, as a skill, plus a **handoff button** that opens the next session already picking up where this one stopped.
 
+Just type:
+
 ```
-/go-bananas      # Claude Code
-$go-bananas      # OpenAI Codex
+GB
 ```
+
+That's it. `GB`, `gb` or `go bananas` as the whole message works in both Claude Code and Codex. So does `/gb` (or `$gb` in Codex), and the full `/go-bananas`.
 
 ## Install
 
@@ -63,26 +66,43 @@ Reads `HANDOVER.md`, checks it against the repo and flags anything that changed,
 
 | Type | What happens |
 |---|---|
-| `/go-bananas` | It decides: finish or hand over. |
-| `/go-bananas finish` | Finish what's owed now. |
-| `/go-bananas handover` | Hand over now, even with room left. |
-| `/go-bananas resume` | Pick up from `HANDOVER.md` in a new session. |
+| `GB` | It decides: finish or hand over. |
+| `GB finish` | Finish what's owed now. |
+| `GB handover` | Hand over now, even with room left. |
+| `GB resume` | Pick up from `HANDOVER.md` in a new session. |
 
-(Use `$go-bananas` instead of `/go-bananas` in Codex.)
+`/gb`, `/go-bananas`, `$gb` and `$go-bananas` take the same words after them.
+
+## Why not just paste a prompt?
+
+A saved prompt or voice snippet is great, and it works in any AI tool with nothing to install. Here's what the skill adds on top:
+
+| | Pasted prompt | Go Bananas |
+|---|---|---|
+| Works in any AI tool | ✅ | Claude Code and Codex only |
+| Nothing to install | ✅ | One-line install |
+| How to trigger | Paste or dictate a long paragraph | Type `GB` |
+| Where the handover lives | A copy box in the chat | `HANDOVER.md`, pushed with your code |
+| Half-finished work | Easy to leave behind on one computer | Pushed to a `wip/` branch |
+| Starting the next session | Copy, open a session, paste | Click a button |
+| Picking up | Hope the new session reads it carefully | Resume rules: checks git, asks decisions first, cleans up after |
+| Context cost | Small | A bit more while it runs |
+
+Best of both: point your snippet at `GB`.
 
 ## Good to know
 
-- **It only runs when you ask.** It's set to manual-only, so saying "wrap up" mid-task won't set it off by accident.
+- **It only runs when you ask.** It's told to fire on `GB`, `go bananas`, or a clear request to wrap up the session, not on everyday wording like "wrap up this function".
 - **It can't see a fuel gauge.** Agents can't measure exactly how much room is left in a session, so it judges from signs like a very long chat or earlier messages already being summarized. When in doubt it hands over: a clean handover is cheap, a session that dies mid-task isn't. Force it either way with `finish` or `handover`.
 - **No skill on the other end? No problem.** `HANDOVER.md` carries its own resume rules, so the buttons work even where the skill isn't installed. The full handover is also shown in one copy box you can paste anywhere.
-- **Extra lazy:** map a voice or text-expander snippet to `/go-bananas` and just say "go bananas".
+- **Extra lazy:** it's already two letters. Map a voice snippet to `GB` if typing is too much.
 
 ## Manual install
 
 ```bash
 git clone https://github.com/Holodeck23/go-bananas
-cp -r go-bananas/claude/go-bananas ~/.claude/skills/    # Claude Code
-cp -r go-bananas/codex/go-bananas ~/.agents/skills/     # Codex
+cp -r go-bananas/claude/* ~/.claude/skills/    # Claude Code
+cp -r go-bananas/codex/* ~/.agents/skills/     # Codex
 ```
 
 Claude Code picks it up right away. In Codex, refresh skills.
@@ -96,6 +116,7 @@ src/                      ← the source (edit here)
   definition.md           ← the skill, written once
   polyskill.yaml          ← build targets
   scripts/handoff-links.sh
+src-gb/                   ← the /gb shortcut, same setup
 claude/go-bananas/        ← built for Claude Code
 codex/go-bananas/         ← built for Codex (+ agents/openai.yaml)
 tests/                    ← checks for the button script
@@ -104,7 +125,8 @@ tests/                    ← checks for the button script
 To change it, edit `src/`, then rebuild and test:
 
 ```bash
-cd src && polyskill build --force && polyskill validate && cd ..
+(cd src && polyskill build --force && polyskill validate)
+(cd src-gb && polyskill build --force && polyskill validate)
 bash tests/handoff-links.test.sh
 ```
 
