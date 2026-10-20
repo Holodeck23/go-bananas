@@ -29,11 +29,13 @@ List unfinished requests and promises by name. Reconcile them with files and, fo
 
 Plain `GB` or `go bananas` relies on skill discovery. Explicit invocation is `/go-bananas` or `/gb` in Claude Code, `$go-bananas` or `$gb` in Codex.
 
-### Context handoff target
+### Context budget: measure before you load
 
-Aim to hand over by **50% of the available context window used** (equivalently, 50% remaining). While this skill is active, check a real context-budget signal before substantial work and after meaningful milestones. Prepare the handover early enough to leave room for verification and closeout. At or above 50%, avoid starting another substantial unit: bring any in-flight action to a safe stopping point, save verified state and hand over the remaining work. Treat this as the default for finish, checkpoint and resume too, unless the user explicitly asks to continue in this session. If the scoped work is already complete, close it out without inventing a transfer.
+Before any large read (a file, folder, log, transcript, diff or tool output that could exceed about 20 KB), check its size first (`wc -c`, `ls -l`, `git diff --stat`, a line count) and say in one line, before reading, what share of the context window it will take. Estimate about 4 bytes per token and name the window size you assume. If one read would take more than 10% of the window, read only the part you need (search, line ranges, a summary) or ask first. Keep a running total of what you have loaded and state it at each checkpoint.
 
-If usage is unavailable, say so; do not infer an exact percentage from chat length or compaction or claim the target was met. Use bounded work units, keep the handover current at milestones and hand over before another substantial unit rather than continuing indefinitely. Compaction is not a fresh-session handoff. This is model-followed guidance while the skill is loaded, not an automatic context monitor; do not install hooks or change global rules to enforce it.
+Before starting a substantial unit, check that its estimated load still fits in what remains, with room left for verification and closeout. If it does not fit, bring in-flight work to a safe stopping point, save verified state and hand over instead. This applies to finish, checkpoint and resume unless the user explicitly asks to continue here. If the scoped work is already complete, close it out without inventing a transfer.
+
+Report a real context-usage signal when the runtime provides one. When it does not, say so and rely on the size checks and running total; never infer a usage percentage from chat length. Compaction is not a fresh-session handoff. This is model-followed guidance while the skill is loaded, not an automatic monitor; do not install hooks or change global rules to enforce it.
 
 If this session has done no work and an active handover exists, offer to resume it rather than overwrite it.
 
@@ -46,7 +48,7 @@ For each item:
 
 Use evidence-based states: prepared, implemented, verified (name the check), pushed, deployed, accepted, blocked, or waiting on the user. These are distinct. A prepared instruction or unobserved external action is not completed work.
 
-Checkpoint before starting another large unit, subject to the context handoff target above. A checkpoint preserves progress but does not replace transferring remaining work when the target is reached. A skill invoked near session end cannot recover information already lost.
+Checkpoint before starting another large unit, subject to the context budget above. A checkpoint preserves progress but does not replace transferring remaining work when the target is reached. A skill invoked near session end cannot recover information already lost.
 
 ## Checkpoint or hand over
 
@@ -61,6 +63,8 @@ Checkpoint before starting another large unit, subject to the context handoff ta
 ### Small closeout check (adapted from Vulcan's Mirror)
 
 Compare requests with artifacts and checks actually observed. Name every unresolved deliverable and its owner. Did the user catch a missed check or correct a claim? Preserve a concrete, reusable lesson or failed approach only if it changes the next session's actions. Omit empty reflection and ceremonial logs. Do not install hooks, invoke other skills, edit global instructions or expand scope to improve the system.
+
+If the environment also runs a session-close audit (such as Vulcan's Mirror), this check is that audit. Write one closing note that meets both: when the audit's own rules call for a log, write this check's result there, in that log's format, instead of producing a second note.
 
 ### Self-contained handover
 
@@ -110,7 +114,7 @@ Prefer project-relative paths for portability. If private artifacts cannot trave
 
 ### Continuation links and copyable fallback
 
-Run the packaged helper from the project directory, choosing the current runtime:
+Run the packaged helper only when the handover is committed and its branch has been pushed to a remote; otherwise skip it and use the resume prompt below. From the project directory, choosing the current runtime:
 
 ```bash
 bash <skill-folder>/scripts/handoff-links.sh --for claude
@@ -121,7 +125,7 @@ bash <skill-folder>/scripts/handoff-links.sh --for codex
 
 The helper is read-only. It checks the local handover and live origin branch; it does not commit, push, fetch or create sessions. If remote inspection is unavailable, keep its warning and offer local/copyable continuation. Links are conveniences, not proof a session opened or resumed. Do not retry authentication or permission failures.
 
-Also show the complete handover in one copy box. Make the outer fence longer than every fence inside it. Fallback: open a session in the same project and send `Resume from <handover path>: read the whole file and follow its resume rules.` For chat-only state, paste the whole handover instead. A local app link or terminal command must point to the intended folder; a cloud link must identify the pushed repository and branch.
+The default handover is light: update the file, then give the saved path and a one-line resume prompt, such as `Resume from <handover path>: read the whole file and follow its resume rules.` Do not repeat the handover in chat. Show the complete handover in one copy box only when it could not be saved to a file (read-only or chat-only state) or the user asks for it; make the outer fence longer than every fence inside it. A local app link or terminal command must point to the intended folder; a cloud link must identify the pushed repository and branch.
 
 ## Resume
 

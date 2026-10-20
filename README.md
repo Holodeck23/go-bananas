@@ -22,9 +22,9 @@ The skill inventories unfinished requests and promises, checks them against actu
 
 If tools can finish an authorized task, it uses them. Otherwise it prepares a browser-agent prompt or gives the user practical steps. A prepared prompt stays marked **prepared** until execution is confirmed.
 
-For continuation, it saves one active `HANDOVER.md` (or the project's preferred artifact path), including boundaries, evidence, unresolved tasks and the first move. It preserves concurrent writers' work and archives completed handovers instead of erasing history. Read-only sessions return the handover in chat.
+For continuation, it saves one active `HANDOVER.md` (or the project's preferred artifact path), including boundaries, evidence, unresolved tasks and the first move. It preserves concurrent writers' work and archives completed handovers instead of erasing history. The default handover is light: the file is updated and you get its path plus a one-line resume prompt, with no full copy in chat. Read-only sessions, which cannot write the file, return the full handover in chat instead.
 
-The small closeout check adapts the useful part of Vulcan's Mirror: reconcile requests against observed results, identify unresolved owners, and retain only lessons that affect the next action. No Vulcan installation, ritual logs or hooks are required.
+The small closeout check adapts the useful part of Vulcan's Mirror: reconcile requests against observed results, identify unresolved owners, and retain only lessons that affect the next action. No Vulcan installation, ritual logs or hooks are required. If a session-close audit such as Vulcan's Mirror is running anyway, the closeout check counts as that audit, so a close produces one closing note, not two.
 
 ### Before sharing
 
@@ -42,16 +42,18 @@ It scans full staged blobs for common credential patterns, personal paths, email
 
 ### Opening the next session
 
-The link helper verifies that the handover is committed and unchanged, the working tree is clean, and the **live origin branch** matches the local commit. It uses a read-only remote query, not a stale or unrelated tracking branch. Only then does it offer a cloud link. Offline/access failures, symlinks, missing files and local changes produce a warning and local/copyable alternatives. It never commits or pushes to make a link work.
+The skill runs the link helper only when the handover's branch has been pushed; otherwise it skips the helper and gives the local resume prompt. The helper verifies that the handover is committed and unchanged, the working tree is clean, and the **live origin branch** matches the local commit. It uses a read-only remote query, not a stale or unrelated tracking branch. Only then does it offer a cloud link. Offline/access failures, symlinks, missing files and local changes produce a warning and local/copyable alternatives. It never commits or pushes to make a link work.
 
 ```bash
 bash <installed-skill>/scripts/handoff-links.sh --for codex
 bash <installed-skill>/scripts/handoff-links.sh --for claude --handover handovers/task.md
 ```
 
-Local links and terminal commands include the intended project location; cloud links identify the GitHub repository and branch. You still need destination access and any local services or ignored files. App links are conveniences: generated URL tests do not prove that an app opened or successfully resumed. The full copyable handover remains the fallback.
+Local links and terminal commands include the intended project location; cloud links identify the GitHub repository and branch. You still need destination access and any local services or ignored files. App links are conveniences: generated URL tests do not prove that an app opened or successfully resumed. The one-line resume prompt remains the fallback.
 
-While loaded, the skill aims to hand over by **50% context use**. It checks real usage when available, prepares early and stops starting substantial work at the target, allowing safe closeout. This applies to finish, checkpoint and resume unless the user explicitly asks to continue. When usage is unavailable, it discloses that limit and uses bounded units with early handoffs; it never invents a percentage or treats compaction as a fresh session. This is guidance for the agent, not an automatic monitor of sessions where the skill is not loaded.
+### Context budget
+
+While loaded, the skill measures before it loads. Before any large read (roughly 20 KB or more), it checks the size and says up front what share of the context window the read will take, at about 4 bytes per token. A single read above 10% of the window is narrowed to the part needed, or asked about first. It keeps a running total, states it at checkpoints, and hands over instead of starting a unit that would not fit with room left for closeout. It reports real usage when the runtime exposes it and never invents a percentage. This applies to finish, checkpoint and resume unless the user explicitly asks to continue. This is guidance for the agent, not an automatic monitor of sessions where the skill is not loaded.
 
 ## Install
 
