@@ -4,7 +4,7 @@ identity:
   description:
     full: >
       Use when the user types /gb or $gb. Two-letter shortcut for the
-      go-bananas skill: finish what's owed, or hand over with one click.
+      go-bananas skill: finish authorized work, checkpoint or hand over verified progress.
     short: Shortcut for go-bananas
 activation:
   triggers:
@@ -28,7 +28,7 @@ constraints:
 
 # gb
 
-Shortcut for **go-bananas**. Run the go-bananas skill now, exactly as if the user had typed it, and pass along anything they typed after `gb` (`finish`, `handover` or `resume`).
+Shortcut for **go-bananas**. Run the go-bananas skill now, exactly as if the user had typed it, and pass along anything they typed after `gb` (`finish`, `handover`, `checkpoint` or `resume`).
 
 - Claude Code: invoke the `go-bananas` skill.
 - Codex: use `$go-bananas`.

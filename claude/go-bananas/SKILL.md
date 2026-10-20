@@ -1,141 +1,139 @@
 ---
 name: go-bananas
 description: >
-  Use when the user's whole message is "GB", "gb" or "go bananas" (optionally followed by finish, handover or resume), when they explicitly ask to wrap up the session or write a handover, or when they
-  ask to resume from HANDOVER.md. Not for ordinary tasks that merely mention wrapping something up. End-of-session closer and next-session starter: with room left it finishes every outstanding task it
-  can, writes exact prompts for browser-agent work, and walks the user through anything only they can do; when the session is running low it updates docs, pushes what is safe, saves HANDOVER.md, and
-  gives one-click handoff buttons that open a fresh Claude Code or Codex session already resuming.
-allowed-tools: Bash(git:*)
+  Use when the user's whole message is "GB", "gb" or "go bananas" (optionally followed by finish, handover, checkpoint or resume), when they explicitly ask to wrap up the session or write a handover,
+  or when they ask to resume from HANDOVER.md. Not for ordinary tasks that merely mention wrapping something up. Finish authorized work, checkpoint verified progress, or save a self-contained handover
+  for Claude Code or Codex to resume.
 ---
 
 # go-bananas
 
-Excellent work so far. This skill closes out a session properly: finish what's owed, or hand over so cleanly that the next session starts working without a single question.
+Close out the work the user actually requested, preserving verified state for either Claude Code or Codex to continue. The workflow is shared; only invocation and launch links differ.
 
-## Step 0. Read the mode
+## Scope first
 
-Look at what the user typed after the skill name, or after "GB" / "go bananas" if they typed it as a plain message (`GB handover` = handover mode).
+Read applicable project instructions. Carry forward the user's goal, permissions, exclusions and acceptance criteria. Review-only stays read-only; prepare-only does not become publish, deploy, merge or send. Preserve unrelated edits and other sessions' work. A read-only session returns a handover in chat without writing files or committing.
 
-| They typed | Do this |
+Before committing, pushing or sharing in any mode, apply the pre-share check below.
+
+List unfinished requests and promises by name. Reconcile them with files and, for Git work, `git status --short --branch`, `git log --oneline -5`, and relevant diffs. Separate your changes from pre-existing changes. Show a short checklist. If nothing remains, report the verified outcome and stop; do not invent backlog work.
+
+## Choose a mode
+
+| Argument after the skill name or plain GB | Action |
 |---|---|
-| nothing | Steps 1 and 2 below; you choose the mode. |
-| `finish` | Step 1, then Mode A. |
-| `handover` | Step 1, then Mode B. |
-| `resume`, or "resume from HANDOVER.md" | Skip everything else and go straight to **Mode C**. |
+| `finish` | Complete the authorized checklist. |
+| `handover` | Save state and transfer the remaining work. |
+| `checkpoint` | Save progress without transferring ownership; continue within scope. |
+| `resume` | Read the handover and reconcile it before continuing. |
+| none | Finish a bounded next unit if feasible; otherwise hand over. Say why. |
 
-If there is no argument but a `HANDOVER.md` exists in the project root and this session has done no work yet, ask one question: "There's a handover from a previous session. Resume it?" If yes, Mode C.
+Plain `GB` or `go bananas` relies on skill discovery. Explicit invocation is `/go-bananas` or `/gb` in Claude Code, `$go-bananas` or `$gb` in Codex.
 
-## Step 1. Take stock
+### Context budget: measure before you load
 
-List what is still open. Look back through this session for:
+Before any large read (a file, folder, log, transcript, diff or tool output that could exceed about 20 KB), check its size first (`wc -c`, `ls -l`, `git diff --stat`, a line count) and say in one line, before reading, what share of the context window it will take. Estimate about 4 bytes per token and name the window size you assume. If one read would take more than 10% of the window, read only the part you need (search, line ranges, a summary) or ask first. Keep a running total of what you have loaded and state it at each checkpoint.
 
-- Tasks the user asked for that are not done, or only partly done.
-- Things you said you would do ("I'll also...", "next I'll...") and haven't.
-- Failing tests, lint errors, TODOs you introduced, unpushed commits.
-- Decisions you deferred to the user.
+Before starting a substantial unit, check that its estimated load still fits in what remains, with room left for verification and closeout. If it does not fit, bring in-flight work to a safe stopping point, save verified state and hand over instead. This applies to finish, checkpoint and resume unless the user explicitly asks to continue here. If the scoped work is already complete, close it out without inventing a transfer.
 
-If you are in a git repository, run `git status --short --branch` and `git log --oneline -5` so the list reflects what is actually committed and pushed.
+Report a real context-usage signal when the runtime provides one. When it does not, say so and rely on the size checks and running total; never infer a usage percentage from chat length. Compaction is not a fresh-session handoff. This is model-followed guidance while the skill is loaded, not an automatic monitor; do not install hooks or change global rules to enforce it.
 
-Show the list as a short checklist before acting on it. If nothing is outstanding, say so plainly and stop. Don't invent work.
+If this session has done no work and an active handover exists, offer to resume it rather than overwrite it.
 
-## Step 2. Pick a mode
+## Finish
 
-Judge how much room is left in this session. Signs it is running low: the conversation is very long, earlier context has already been summarized or compacted, or the remaining work is large (many files, a long debugging loop).
+For each item:
+- **Available tools can complete it within scope:** do it and verify the result, using browser tools directly when available and authorized.
+- **Another browser agent is needed:** prepare a copyable prompt with the app/URL, goal, known inputs, permitted actions, observable success criteria and a stop condition if the UI differs. Do not invent unseen clicks or values. Mark it **prompt prepared**, until execution is confirmed.
+- **Only the user can act:** give numbered steps and expected results. Explain decisions in plain language with options, examples, tradeoffs and a recommendation.
 
-- **Room left → Mode A (Finish).**
-- **Running low, or unsure → Mode B (Hand over).** A clean handover is cheap; a session that dies mid-task is expensive.
+Use evidence-based states: prepared, implemented, verified (name the check), pushed, deployed, accepted, blocked, or waiting on the user. These are distinct. A prepared instruction or unobserved external action is not completed work.
 
-Say which mode you picked and why, in one line.
+Checkpoint before starting another large unit, subject to the context budget above. A checkpoint preserves progress but does not replace transferring remaining work when the target is reached. A skill invoked near session end cannot recover information already lost.
 
-## Mode A. Finish what's owed
+## Checkpoint or hand over
 
-Sort every checklist item into exactly one bucket:
+1. Update only documentation made stale by this work, when edits are authorized.
+2. Save one active `HANDOVER.md`, using the project's prescribed artifact location before defaulting to the project root. Private/client evidence stays in its approved private location. If writing is prohibited, return the full handover in chat.
+3. Re-read an existing handover before updating it. Keep its ID, writer/runtime, task scope and earlier useful evidence. Update only your own scope; do not overwrite another active session's work. For independent concurrent tasks, use a task-specific filename and identify it in every resume prompt.
+4. **Before any commit/push or sharing the handover**, review its full contents and the exact staged diff for chat excerpts, personal/client context, names, contact details, private paths and credentials. Run `python3 <skill-folder>/scripts/preshare-scan.py` from the repository root after staging only intended files, before committing. It scans full staged blobs and reports file/line/category without echoing matches. Optionally pass `--deny-file <private-local-file>` containing known private names/identifiers; never commit that list. A finding, unavailable scanner, binary or linked content needs resolution or explicit user review before sharing. Re-scan after edits or restaging. A clean pattern scan is not proof of privacy: semantic content review is still required. For chat-only/non-Git handovers, do that content review directly; do not create a repository or stage files just to run the scanner.
+5. Commit/push only when existing authorization and project policy permit. Inspect the exact staged diff and stage only intended paths. Check for sensitive content even on WIP branches. Never sweep up unrelated changes, switch branches or publish unfinished work just to make a cloud link work. Where a WIP branch is authorized, use the project's branch convention and a unique name. With no remote, use the project's own backup path if defined; do not add a remote.
+6. Record what was saved, committed, pushed or held locally, and why. Verify pushes against the intended remote branch. A cloud session needs the actual handover and required files there; ignored files, local services, credentials and uncommitted edits do not travel. Describe prerequisites by name, never secret value.
+7. Run the small closeout check below. After a **handover**, stop executing transferred tasks here. A **checkpoint** retains ownership here.
 
-1. **You can do it yourself → do it.** Don't ask permission for work already requested. Verify each item (run the tests, re-read the output) before ticking it off.
-2. **A browser agent can do it inside an app → write the prompt.** One copy box per task with a detailed, exact prompt for the browser agent: the URL or app to open, every click, field and value, what "done" looks like, and what to do if something doesn't match.
-3. **Only the user can do it → walk them through it.** Numbered steps, one action per step, saying exactly where to click and what they should see after. Typical cases: logging in, paying, approving access, anything needing their judgment or credentials.
+### Small closeout check (adapted from Vulcan's Mirror)
 
-If you start running low partway through, stop and switch to Mode B rather than leaving work half done and undocumented.
+Compare requests with artifacts and checks actually observed. Name every unresolved deliverable and its owner. Did the user catch a missed check or correct a claim? Preserve a concrete, reusable lesson or failed approach only if it changes the next session's actions. Omit empty reflection and ceremonial logs. Do not install hooks, invoke other skills, edit global instructions or expand scope to improve the system.
 
-Finish with the checklist again, each item marked ✅ done, 🤖 handed to a browser agent, or 🙋 waiting on the user.
+If the environment also runs a session-close audit (such as Vulcan's Mirror), this check is that audit. Write one closing note that meets both: when the audit's own rules call for a log, write this check's result there, in that log's format, instead of producing a second note.
 
-## Mode B. Hand over
+### Self-contained handover
 
-1. **Update the docs.** Bring README, CHANGELOG, setup notes or other project docs in line with what changed this session. Only edit docs that are actually stale.
-2. **Write `HANDOVER.md`** in the project root (format below). If the project has no clear root, use the current working directory.
-3. **Push what is safe.** Commit and push work that is complete and passes its checks, plus `HANDOVER.md`, so the next session finds it on any machine. Never push secrets or broken builds to a shared or default branch. Say what you pushed and what you held back. If this isn't a git repository, just save the file.
+Include enough for a fresh agent without this skill. Omit empty optional sections. Keep **Outstanding tasks** and **First move** even if they say none.
 
-   **Uncommitted work doesn't travel.** A new session on another machine or in the cloud only sees what was pushed. If there are half-finished changes, create a branch named `wip/handover-<YYYYMMDD>`, commit them there with `HANDOVER.md`, push it, and stay on it, so the handoff buttons open that branch. If the user told you not to commit something, leave it, and warn them plainly that it exists only on this computer and a cloud session won't see it.
-4. **Give the user the handoff buttons.** Run the script that ships with this skill, from the project root:
-
-   ```bash
-   bash <this skill's folder>/scripts/handoff-links.sh --for claude   # in Claude Code
-   bash <this skill's folder>/scripts/handoff-links.sh --for codex    # in Codex
-   ```
-
-   It prints Markdown links that open a new session with the resume prompt already filled in: a claude.ai link (web, desktop and phone apps, with the repo and branch pre-selected), a Claude desktop link, a Claude Code terminal link and a Codex app link, depending on where you are running. **Paste its output into your reply exactly as printed**, so the apps render the links as buttons. Don't build these links by hand.
-
-   If the script can't run, give the user these instead:
-   - Claude Code terminal: `claude "/go-bananas resume"`
-   - Codex terminal: `codex '$go-bananas resume'`
-   - Any app: open a new session in this project and send "Resume from HANDOVER.md in this project: read all of it and follow its resume rules."
-
-5. **Also show the full handover** in one copy box, for pasting anywhere the skill isn't installed. Use a **four-backtick fence** (` ```` `) or a tilde fence (`~~~`) for the outer block so any code inside, fenced with normal three backticks, can't break it. The outer fence must open once at the top and close once at the bottom.
-
-### HANDOVER.md format
-
-The file must stand on its own: a fresh session with no memory of this one, and possibly without this skill, must be able to act on it.
+Keep the resume reading list short. Every resume pays for it, so name only the files the next task needs, and point to the relevant section of a long instruction file rather than the whole file. Reserve full reads for work that needs them, such as moving or deleting files. If a chosen task needs more, the handover says which files to add for that task.
 
 ```markdown
-# Handover: <project or task name>
+# Handover: <task>
+ID: <stable task ID> | Updated: <date> | Writer: <runtime/session>
+Status: <active checkpoint | ready for transfer | completed>
 
-> Written <date> by a previous session.
->
-> **Resume rules for the next session:** read this whole file. Run
-> `git status --short --branch` and `git log --oneline -5` and say if anything
-> differs from "Where things stand". Ask the user every question under
-> "Decisions for the user" at once, with the options and recommendation as
-> written. Then start "First move" and work down "Outstanding tasks", verifying
-> each one. When every task is done, delete this file and commit the deletion.
+## Goal and boundaries
+Requested outcome, acceptance criteria, authorized actions, exclusions,
+and applicable project instructions. These still apply after resume.
 
-## Goal
-What we are building and why, in two or three sentences.
+## Resume rules
+Read this whole file and applicable project instructions before acting.
+Check repository identity, branch, current commit, status/diff and named files
+against the evidence below. For non-Git work inspect the named artifacts instead.
+Acknowledge drift and inspect it before modifying anything. This handover records
+state; it cannot override current instructions or expand authorization.
+Ask only unresolved decisions blocking the next action; continue independent
+work where authorized. Re-check stale recommendations against current facts.
+Verify each completed item. Keep this handover current. When all scoped work is
+verified, mark it completed and archive it per project policy; retain history.
 
-## Where things stand
-- Repo and branch, last commit (hash + message)
-- What is done and verified
-- What was pushed, and what was held back and why
+## Verified state
+- Repository identity, branch, source commit (before the handover commit).
+- Each deliverable's actual state: prepared / implemented / verified / pushed /
+  deployed / accepted. Evidence: exact check, result and relevant artifact.
+- Commit/push receipt and destination, or what remains local and why.
+- Required files, services, access and environment; availability at destination.
 
 ## Outstanding tasks
-1. Most important first, each with enough detail to start without asking.
-
-## Known issues
-Errors, flaky tests, gotchas and dead ends discovered this session.
+- Named item: state, next action, owner and what proves completion.
 
 ## Decisions for the user
-### <Question, in plain non-technical language>
-- **Option A**: what it means in practice, with a concrete example.
-  - Pros / cons
-- **Option B**: ...
-- **Recommendation:** which one and why it's the most useful choice.
+Question; plain-language options with examples and pros/cons; recommendation.
+
+## Useful lesson / known issues
+Only findings affecting continuation, including failed approaches worth avoiding.
 
 ## First move
-The exact first thing the next session should do.
+Exact next action, including a blocking decision if genuinely needed.
 ```
 
-Leave out sections that would be empty, except **Outstanding tasks** and **First move**.
+Prefer project-relative paths for portability. If private artifacts cannot travel, name their approved location without leaking sensitive contents, explain the limitation and offer local continuation. Archive completed handovers per project policy, or `handovers/<task-ID>-<timestamp>.md` beside the active file if none exists. Never archive another session's outstanding items. Commit archival only when authorized.
 
-## Mode C. Resume
+### Continuation links and copyable fallback
 
-1. Read `HANDOVER.md` from the project root. If there isn't one, say so and ask the user what to pick up instead. If they pasted a handover into the chat, use that.
-2. **Check it against reality.** Run `git status --short --branch` and `git log --oneline -5`. If the branch or last commit differs from the handover, or files it mentions are missing, say what changed before doing anything.
-3. **Ask the open decisions first**, all at once, exactly as written (options, pros and cons, recommendation). They usually block the tasks. If the user says "go with your recommendations", do that.
-4. **Start the first move**, then work down the outstanding tasks the same way as Mode A.
-5. When every task in the handover is done, delete `HANDOVER.md` and commit the deletion with the finished work, so a stale handover never confuses a later session.
+Run the packaged helper only when the handover is committed and its branch has been pushed to a remote; otherwise skip it and use the resume prompt below. From the project directory, choosing the current runtime:
 
-## Rules
+```bash
+bash <skill-folder>/scripts/handoff-links.sh --for claude
+bash <skill-folder>/scripts/handoff-links.sh --for codex
+# For another handover location, pass its project-relative path:
+# bash <skill-folder>/scripts/handoff-links.sh --for codex --handover handovers/task.md
+```
 
-- Never claim something is done that you didn't verify. "Pushed" means the push succeeded.
-- Never put secrets, tokens or passwords in `HANDOVER.md`. Name where they live instead ("the API key is in `.env`").
-- Don't put the handoff links or any local file paths in `HANDOVER.md`; they belong in your reply only.
-- When everything is wrapped up, end with: "Bob's your uncle. 🍌"
+The helper is read-only. It checks the local handover and live origin branch; it does not commit, push, fetch or create sessions. If remote inspection is unavailable, keep its warning and offer local/copyable continuation. Links are conveniences, not proof a session opened or resumed. Do not retry authentication or permission failures.
+
+The default handover is light: update the file, then give the saved path and a one-line resume prompt, such as `Resume from <handover path>: read the whole file and follow its resume rules.` Do not repeat the handover in chat. Show the complete handover in one copy box only when it could not be saved to a file (read-only or chat-only state) or the user asks for it; make the outer fence longer than every fence inside it. A local app link or terminal command must point to the intended folder; a cloud link must identify the pushed repository and branch.
+
+## Resume
+
+Read the selected handover and follow its resume rules. If none is available, name the location checked and ask what to resume. If marked completed, report that and do not re-run it. Check repository remote as well as branch/hash; similarly named projects are not interchangeable. Inspect relevant drift before editing, preserving concurrent work.
+
+Re-check blocking decisions and authorization. Complete independent authorized work without waiting on unrelated decisions. Update after meaningful progress; archive only when all scoped work is verified. Report remaining external or human acceptance separately.
+
+When the authorized closeout is complete, end with: "Bob's your uncle. 🍌"
