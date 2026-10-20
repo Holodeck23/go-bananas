@@ -70,6 +70,8 @@ If the environment also runs a session-close audit (such as Vulcan's Mirror), th
 
 Include enough for a fresh agent without this skill. Omit empty optional sections. Keep **Outstanding tasks** and **First move** even if they say none.
 
+Keep the resume reading list short. Every resume pays for it, so name only the files the next task needs, and point to the relevant section of a long instruction file rather than the whole file. Reserve full reads for work that needs them, such as moving or deleting files. If a chosen task needs more, the handover says which files to add for that task.
+
 ```markdown
 # Handover: <task>
 ID: <stable task ID> | Updated: <date> | Writer: <runtime/session>
